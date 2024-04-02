@@ -77,12 +77,12 @@ type Response struct {
 
 func SendMail(to string, subject string, content string) {
 	email := gomail.NewMessage()
-	email.SetHeader("From", "noreply@carihati.online")
+	email.SetHeader("From", "if-21035@students.ithb.ac.id")
 	email.SetHeader("To", to)
 	email.SetHeader("Subject", subject)
 	email.SetBody("text/plain", content)
 
-	sender := gomail.NewDialer("smtppro.zoho.com", 587, "noreply@carihati.online", "rw3NBFZnWeGk")
+	sender := gomail.NewDialer("smtp.gmail.com", 587, "if-21035@students.ithb.ac.id", "nncr zidi avyd ycql")
 
 	if err := sender.DialAndSend(email); err != nil {
 		panic(err)
