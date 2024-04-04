@@ -106,9 +106,12 @@ func insertUser(c echo.Context) error {
 	db := gormConn()
 
 	user := new(Users)
+	subscription := new(Subscriptions)
 	user.Username = c.FormValue("username")
 	user.Email = c.FormValue("email")
 	user.Password = c.FormValue("password")
+	subscription.Layanan_ID, _ = strconv.Atoi(c.FormValue("layanan_id"))
+	subscription.Jenis_Payment = c.FormValue("jenis_payment")
 
 	query := db.Select("username", "email", "password").Create(&user)
 	if query.Error != nil {
@@ -116,9 +119,7 @@ func insertUser(c echo.Context) error {
 			"message": "Gagal memasukkan data pengguna",
 		})
 	}
-	subscription := new(Subscriptions)
-	subscription.Jenis_Payment = "OvO"
-	subscription.Layanan_ID = 1
+
 	subscription.User_ID = user.User_ID
 	subscription.Active = false
 	query2 := db.Select("user_id", "layanan_id", "jenis_payment", "active").Create(&subscription)
@@ -134,19 +135,21 @@ func insertUser(c echo.Context) error {
 
 func Subscribe(c echo.Context) error {
 	db := gormConn()
+	user_id, _ := strconv.Atoi(c.QueryParam("user_id"))
 	id, _ := strconv.Atoi(c.QueryParam("layanan_id"))
 
-	user_id := GetRedis(ring, "userId")
 	email := GetRedis(ring, "userEmail")
 	var response Response
 	if err := ring.Get(ctx, "userData"); err != nil {
 		result := db.Table("subscriptions").Where("user_id=? AND layanan_id=?", user_id, id).Update("active", true)
 		if result.Error == nil {
 			response.Status = http.StatusOK
+			log.Println(result)
 			response.Message = "Success Subscribe"
-			SendMail(email, "Subscription Activation Success", "Congratulations your monthly subscription to Spotify was successfully activated")
+			SendMail(email, "Subscription Activation Success", "Congratulations your monthly subscription to Netflix was successfully activated")
 		} else {
 			response.Status = http.StatusInternalServerError
+			log.Println(result)
 			response.Message = "Fail Subscribe"
 		}
 	}
@@ -187,7 +190,7 @@ func CheckActive() bool {
 func task() {
 	active := CheckActive()
 	if !active {
-		SendMail(GetRedis(ring, "userEmail"), "Activate your Subscription", "Activate full Spotify Premium to enjoy all the features")
+		SendMail(GetRedis(ring, "userEmail"), "Activate your Netflix Subscription", "Activate full Netflix Premium to enjoy all the features")
 	}
 }
 
