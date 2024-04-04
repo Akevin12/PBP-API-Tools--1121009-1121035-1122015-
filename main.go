@@ -94,11 +94,10 @@ func GetUserData(user_id int) {
 	var user Users
 	user.User_ID = user_id
 	result := db.First(&user)
+
 	if result.Error == nil {
 		SetRedis(ring, "userId", strconv.Itoa(user.User_ID), 0)
 		SetRedis(ring, "userEmail", user.Email, 0)
-	} else {
-		panic(result.Error)
 	}
 }
 
@@ -135,18 +134,18 @@ func insertUser(c echo.Context) error {
 
 func Subscribe(c echo.Context) error {
 	db := gormConn()
-	user_id, _ := strconv.Atoi(c.QueryParam("user_id"))
 	id, _ := strconv.Atoi(c.QueryParam("layanan_id"))
 
+	user_id := GetRedis(ring, "userId")
 	email := GetRedis(ring, "userEmail")
 	var response Response
 	if err := ring.Get(ctx, "userData"); err != nil {
 		result := db.Table("subscriptions").Where("user_id=? AND layanan_id=?", user_id, id).Update("active", true)
 		if result.Error == nil {
 			response.Status = http.StatusOK
-			log.Println(result)
 			response.Message = "Success Subscribe"
 			SendMail(email, "Subscription Activation Success", "Congratulations your monthly subscription to Netflix was successfully activated")
+			log.Println(CheckActive())
 		} else {
 			response.Status = http.StatusInternalServerError
 			log.Println(result)
@@ -169,6 +168,8 @@ func Unsubscribe(c echo.Context) error {
 			response.Status = http.StatusOK
 			response.Message = "Successful Termination"
 			SendMail(email, "Subscription Terminated", "I'm sorry to see you go, Please contact us if you'd like to communicate any issues.")
+			log.Println(CheckActive())
+
 		} else {
 			response.Status = http.StatusInternalServerError
 			response.Message = "Fail Unsubscribe"
@@ -196,7 +197,7 @@ func task() {
 
 func main() {
 	router := echo.New()
-	go GetUserData(1)
+	go GetUserData(15)
 	time.Sleep(2 * time.Second)
 	gocron.Start()
 	gocron.Every(20).Seconds().Do(task)
