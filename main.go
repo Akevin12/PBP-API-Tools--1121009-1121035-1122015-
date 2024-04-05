@@ -144,7 +144,7 @@ func Subscribe(c echo.Context) error {
 		if result.Error == nil {
 			response.Status = http.StatusOK
 			response.Message = "Success Subscribe"
-			SendMail(email, "Subscription Activation Success", "Congratulations your monthly subscription to Netflix was successfully activated")
+			go SendMail(email, "Subscription Activation Success", "Congratulations your monthly subscription to Netflix was successfully activated")
 			log.Println(CheckActive())
 		} else {
 			response.Status = http.StatusInternalServerError
@@ -167,7 +167,7 @@ func Unsubscribe(c echo.Context) error {
 		if result.Error == nil {
 			response.Status = http.StatusOK
 			response.Message = "Successful Termination"
-			SendMail(email, "Subscription Terminated", "I'm sorry to see you go, Please contact us if you'd like to communicate any issues.")
+			go SendMail(email, "Subscription Terminated", "I'm sorry to see you go, Please contact us if you'd like to communicate any issues.")
 			log.Println(CheckActive())
 
 		} else {
@@ -197,12 +197,12 @@ func task() {
 
 func main() {
 	router := echo.New()
-	go GetUserData(15)
+	go GetUserData(18)
 	time.Sleep(2 * time.Second)
 	gocron.Start()
 	gocron.Every(20).Seconds().Do(task)
 	router.PUT("/subscribe", Subscribe)
 	router.POST("/users", insertUser)
 	router.PUT("/unsubscribe", Unsubscribe)
-	router.Logger.Fatal(router.Start(":1323"))
+	router.Logger.Fatal(router.Start(":8888"))
 }
